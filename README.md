@@ -1,6 +1,6 @@
 # Enterprise DevOps Platform
 
-[![CI - Development](https://github.com/parisinghal31/devops-cicd-security-platform/actions/workflows/ci-development.yml/badge.svg?branch=development)](https://github.com/parisinghal31/devops-cicd-security-platform/actions/workflows/ci-development.yml)
+[![CI - Development](https://github.com/parisinghal31/pari-devops-cicd-security-platform/actions/workflows/ci-development.yml/badge.svg?branch=development)](https://github.com/parisinghal31/devops-cicd-security-platform/actions/workflows/ci-development.yml)
 [![CD - Production](https://github.com/parisinghal31/devops-cicd-security-platform/actions/workflows/cd-production.yml/badge.svg?branch=production)](https://github.com/parisinghal31/devops-cicd-security-platform/actions/workflows/cd-production.yml)
 
 End-to-end DevOps reference implementation covering Linux administration,
