@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+*.log
+.env
+artifacts/*.tar.gz
+!artifacts/.gitkeep
+backup-configs/
+opa
+.scannerwork/

@@ -1,0 +1,27 @@
+pipeline:
+  name: enterprise-devops-pipeline
+  version: "1.0.0"
+  owner: pari-singhal
+  triggers:
+    - branch: development
+      events: [push, pull_request]
+    - branch: production
+      events: [push]
+  stages:
+    - name: source-checkout
+      actions: [checkout]
+    - name: build
+      actions: [npm-install, transpile]
+    - name: test
+      actions: [jest, integration-tests]
+    - name: security-validation
+      actions: [sonarqube-scan, opa-policy-check, npm-audit]
+    - name: deployment
+      actions: [publish-artifact, deploy-to-environment, smoke-tests]
+  rollback:
+    strategy: previous-version
+    enabled: true
+    trigger_on: deployment-failure
+  artifacts:
+    path: artifacts/
+    retention_days: 30
