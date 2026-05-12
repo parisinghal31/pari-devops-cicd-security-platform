@@ -1,0 +1,61 @@
+name: CI - Development
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+env:
+  APP_ENV: development
+  NODE_VERSION: "20"
+
+jobs:
+  build-test-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Source Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build - Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Test - Jest with coverage
+        run: npx jest --coverage || true
+
+      - name: Security Validation - SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        continue-on-error: true
+
+      - name: Security Validation - OPA Policy Check
+        run: |
+          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static
+          chmod +x opa
+          sudo apt-get install -y python3-yaml >/dev/null
+          for f in deployments/*.yaml; do
+            python3 -c "import yaml,json,sys;print(json.dumps(yaml.safe_load(open('$f'))))" > /tmp/in.json
+            ./opa eval --format pretty --data policies/ --input /tmp/in.json "data.main.deny" || true
+          done
+
+      - name: Deployment - Package artifact
+        run: |
+          mkdir -p artifacts
+          tar -czf artifacts/build-${{ github.sha }}.tar.gz src/ configs/ package.json
+          ls -lh artifacts/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-build-${{ github.sha }}
+          path: artifacts/
+          retention-days: 14

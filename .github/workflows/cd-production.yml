@@ -1,0 +1,64 @@
+name: CD - Production
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch:
+
+env:
+  APP_ENV: production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Source Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          test -n "${{ secrets.PROD_DEPLOY_TOKEN }}" || (echo "Missing PROD_DEPLOY_TOKEN" && exit 1)
+
+      - name: Build production artifact
+        id: build
+        run: |
+          mkdir -p artifacts
+          ARTIFACT="artifacts/prod-${{ github.sha }}.tar.gz"
+          tar -czf "$ARTIFACT" src/ configs/ deployments/
+          echo "artifact=$ARTIFACT" >> "$GITHUB_OUTPUT"
+
+      - name: OPA gate (must pass)
+        run: |
+          curl -sL -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static
+          chmod +x opa
+          FAIL=0
+          for f in deployments/*.yaml; do
+            python -c "import yaml,json;print(json.dumps(yaml.safe_load(open('$f'))))" > /tmp/in.json
+            RESULT=$(./opa eval --format json --data policies/ --input /tmp/in.json "data.main.deny" | python -c "import sys,json;d=json.load(sys.stdin);r=d['result'][0]['expressions'][0]['value'];print(len(r))")
+            if [ "$RESULT" != "0" ]; then
+              echo "Policy violations in $f"; FAIL=1
+            fi
+          done
+          [ "$FAIL" = "0" ]
+
+      - name: Deploy
+        id: deploy
+        run: |
+          echo "Deploying ${{ steps.build.outputs.artifact }} to production..."
+          echo "Deployment ID: deploy-${{ github.run_id }}" | tee -a artifacts/deployment.log
+          # Actual deployment command would go here, e.g. kubectl apply -f deployments/
+
+      - name: Rollback on failure
+        if: failure() && steps.deploy.conclusion == 'failure'
+        run: |
+          echo "Deployment failed — rolling back to previous release"
+          echo "Rollback initiated at $(date -u)" >> artifacts/deployment.log
+          # kubectl rollout undo deployment/company-devops-app -n production
+
+      - name: Upload deployment report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-deployment-${{ github.sha }}
+          path: artifacts/

@@ -1,0 +1,13 @@
+{
+  "name": "enterprise-payments-service",
+  "version": "1.0.0",
+  "description": "Sample app for DevOps Make Up exam (Pari Singhal)",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
