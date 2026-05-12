@@ -61,4 +61,4 @@ organization `parisinghal31`. Quality gate wait enabled.
 - `policies/container/` - no `:latest`/`:nightly`/`:snapshot`, no privileged mode.
 
 ## Author
-**Pari Singhal** - DevOps coursework, Make Up exam.
+**Pari Singhal** - DevOps coursework, Make Up exam (main edit).
