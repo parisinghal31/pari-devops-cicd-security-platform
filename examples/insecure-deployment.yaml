@@ -1,0 +1,24 @@
+# Intentionally insecure manifest used to demonstrate OPA policy failures.
+# Validation against policies/ MUST reject this file.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-worker
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-worker
+  template:
+    metadata:
+      labels:
+        app: legacy-worker
+    spec:
+      containers:
+        - name: worker
+          image: redis:latest
+          securityContext:
+            runAsUser: 0
+            privileged: true
+            allowPrivilegeEscalation: true
